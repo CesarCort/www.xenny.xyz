@@ -6,7 +6,6 @@ import {
   RegisterData,
   PasswordRecoveryData,
   PasswordResetData,
-  SupabaseUser,
 } from "@/core/types/auth.types";
 import { AUTH_ERRORS } from "@/core/constants/auth.constants";
 import { useAuthStore } from "../store/useAuthStore";
