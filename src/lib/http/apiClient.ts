@@ -1,5 +1,3 @@
-import { AUTH_ROUTES } from "@/core/constants/auth.constants";
-import type { AuthTokens } from "@/core/types/auth.types";
 import { useAuthStore } from "@/modules/auth/store/useAuthStore";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
@@ -97,75 +95,28 @@ const parseResponseBody = async (response: Response) => {
   return response.text();
 };
 
-let refreshPromise: Promise<AuthTokens | null> | null = null;
-
-const performRefresh = async (): Promise<AuthTokens | null> => {
-  const { tokens, setTokens, logout } = useAuthStore.getState();
-  if (!tokens?.refreshToken) {
-    logout();
-    return null;
-  }
-
-  const response = await fetch(buildUrl(AUTH_ROUTES.REFRESH_TOKEN), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ refreshToken: tokens.refreshToken }),
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    logout();
-    return null;
-  }
-
-  const data = (await response.json()) as AuthTokens;
-  setTokens(data);
-  return data;
-};
-
-const refreshTokens = async () => {
-  if (!refreshPromise) {
-    refreshPromise = performRefresh().finally(() => {
-      refreshPromise = null;
-    });
-  }
-  return refreshPromise;
-};
-
-const createHeaders = (
-  options: RequestConfig,
-  accessToken: string | undefined
-) => {
+const createHeaders = (options: RequestConfig) => {
   const headers = new Headers(options.headers ?? {});
   if (isJsonBody(options.body) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-
-  if (options.auth !== false && accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
-
   return headers;
 };
 
 const executeRequest = async <T>(
   path: string,
-  options: RequestConfig,
-  retry = true
+  options: RequestConfig
 ): Promise<T> => {
   const {
     body,
     params,
     auth = true,
-    retryOnUnauthorized = true,
     credentials = "include",
     ...rest
   } = options;
 
-  const { tokens, logout } = useAuthStore.getState();
-  const headers = createHeaders(options, auth ? tokens?.accessToken : undefined);
+  const { logout } = useAuthStore.getState();
+  const headers = createHeaders(options);
   const requestInit: RequestInit = {
     ...rest,
     credentials,
@@ -175,24 +126,7 @@ const executeRequest = async <T>(
 
   const response = await fetch(buildUrl(path, params), requestInit);
 
-  if (
-    response.status === 401 &&
-    retry &&
-    retryOnUnauthorized &&
-    auth !== false
-  ) {
-    const refreshed = await refreshTokens();
-    if (refreshed?.accessToken) {
-      return executeRequest<T>(
-        path,
-        {
-          ...options,
-          headers,
-        },
-        false
-      );
-    }
-
+  if (response.status === 401 && auth !== false) {
     logout();
     throw new ApiError("Sesión expirada", 401);
   }

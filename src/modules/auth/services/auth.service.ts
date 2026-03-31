@@ -13,7 +13,9 @@ export const authService = {
       email,
       password,
     });
-    if (error || !data.user) throw new Error(error?.message || "Error de autenticación");
+    if (error || !data?.user) {
+      throw new Error(error?.message || "Error de autenticación");
+    }
     return { user: mapSupabaseUser(data.user) };
   },
 
@@ -27,7 +29,9 @@ export const authService = {
         data: { firstName, lastName },
       },
     });
-    if (error || !res.user) throw new Error(error?.message || "Error al registrar");
+    if (error || !res?.user) {
+      throw new Error(error?.message || "Error al registrar");
+    }
     return { user: mapSupabaseUser(res.user) };
   },
 
@@ -37,14 +41,18 @@ export const authService = {
     return true;
   },
 
-  resetPassword: async ({ token, newPassword }: PasswordResetData) => {
+  resetPassword: async (_payload: PasswordResetData) => {
     // Este método depende de tu flujo de reset de Supabase
     // Puedes adaptarlo según tu manejo de link mágico
     throw new Error('No implementado: Ver documentación de Supabase para flujos custom de reset.');
   },
 };
 
-function mapSupabaseUser(suUser: any): SupabaseUser {
+function mapSupabaseUser(suUser: {
+  id: string;
+  email: string;
+  user_metadata?: Record<string, unknown>;
+}): SupabaseUser {
   return {
     id: suUser.id,
     email: suUser.email,

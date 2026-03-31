@@ -105,7 +105,7 @@ Vite levanta la app localmente, normalmente en `http://localhost:5173`.
 
 ## Variables de entorno
 
-Hoy la variable realmente utilizada en el frontend es:
+Hoy la unica variable potencialmente usada en el frontend es:
 
 ```ini
 VITE_API_URL=http://localhost:3000/api
@@ -114,7 +114,26 @@ VITE_API_URL=http://localhost:3000/api
 Observaciones:
 
 - `apiClient` usa `VITE_API_URL` como base para requests HTTP.
+- En el estado actual del proyecto, `VITE_API_URL` es opcional.
+- Si no se define, la landing publica no falla ni en build ni en runtime.
 - El cliente de Supabase actual esta deshabilitado en `src/lib/supabaseClient.ts`, por lo que las variables de Supabase no son el punto critico hoy para la landing.
+
+## Deploy en Vercel
+
+El repo ya incluye [vercel.json](/Users/cesar/Documents/General/Personal/Proyectos/xenny/frontend.base/vercel.json) con la configuracion necesaria para este proyecto:
+
+- `framework: vite`
+- `buildCommand: npm run build`
+- `outputDirectory: dist`
+- fallback de SPA a `index.html` para que rutas como `/version-1`, `/login` o `/dashboard` no rompan al refrescar
+
+En Vercel solo necesitas:
+
+1. Importar el repositorio.
+2. Confirmar que detecte Vite.
+3. Definir `VITE_API_URL` solo si en el futuro vas a consumir un backend real.
+
+Con la build actual, el proyecto compila correctamente para produccion.
 
 ## Scripts disponibles
 
